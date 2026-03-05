@@ -1,0 +1,1 @@
+export function getRSUStatus(lastSeen:Date){const age=(Date.now()-new Date(lastSeen).getTime())/1000; if(age<120) return 'ONLINE'; if(age<300) return 'STALE'; return 'OFFLINE';}

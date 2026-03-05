@@ -1,0 +1,2 @@
+import RSUKey from "@/models/RSUKey";
+export async function requireRSU(req:any){const key=req.headers['x-api-key']; if(!key) throw new Error('Missing API key'); const rsu=await RSUKey.findOne({revoked:false,$or:[{activeKey:key},{nextKey:key}]}); if(!rsu) throw new Error('Invalid API key'); return rsu;}

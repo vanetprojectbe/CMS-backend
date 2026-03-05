@@ -1,0 +1,1 @@
+import mongoose from 'mongoose'; const schema=new mongoose.Schema({rsuId:String,vehicleId:String,timestamp:Date,location:Object,features:Object,edgeSeverity:String,cloudSeverity:String,confidence:Number}); export default mongoose.models.Incident||mongoose.model('Incident',schema);

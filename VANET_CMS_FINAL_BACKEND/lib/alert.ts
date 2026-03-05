@@ -1,0 +1,1 @@
+import nodemailer from 'nodemailer'; export async function sendAlert(subject:string,message:string){ const t=nodemailer.createTransport({host:'smtp.gmail.com',port:587,secure:false,auth:{user:process.env.ALERT_EMAIL,pass:process.env.ALERT_EMAIL_PASS}}); await t.sendMail({from:process.env.ALERT_EMAIL,to:process.env.ALERT_RECIPIENTS,subject,text:message}); }
