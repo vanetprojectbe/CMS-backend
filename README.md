@@ -1,75 +1,77 @@
-```markdown
-# 🚗 VANET Accident Detection System – CMS Backend
+# VANET Accident Detection CMS Backend
 
-Backend service for the **Vehicular Ad-hoc Network (VANET) Accident Detection System**.  
-This backend acts as the **Central Monitoring Server (CMS)** that receives accident alerts from **RSU devices**, stores them in **MongoDB**, and provides APIs for the **admin dashboard**.
+Backend service for the **Vehicular Ad Hoc Network (VANET) Accident Detection System**.
+This backend acts as the **Central Management Server (CMS)** responsible for receiving accident reports from Road Side Units (RSUs), storing them in a database, and providing APIs for the administrative dashboard.
 
----
-
-# 📌 Project Description
-
-The VANET CMS backend is responsible for:
-
-- Receiving accident alerts from **Road Side Units (RSUs)**
-- Storing accident data in **MongoDB Atlas**
-- Providing REST APIs for the **CMS dashboard**
-- Managing RSU devices
-- Handling **admin authentication**
-- Acting as the **central communication hub** between vehicles, RSUs, and the monitoring dashboard
-
-This system is designed as part of a **Final Year Engineering Project** focused on improving **road safety and emergency response time**.
+The system enables **real-time accident reporting, monitoring, and management** for intelligent transportation systems.
 
 ---
 
-# 🧠 System Architecture
+# Project Overview
+
+This backend is designed to support an **IoT-based accident detection architecture** using VANET communication.
+
+Vehicles equipped with **On-Board Units (OBU)** communicate with **Road Side Units (RSU)** which detect potential accidents.
+The RSU sends accident data to this CMS backend where it is processed, stored, and made available to the dashboard.
+
+The backend provides:
+
+* Secure REST APIs
+* Accident data storage
+* RSU monitoring
+* Admin authentication
+* Dashboard data services
+
+---
+
+# System Architecture
+
+Vehicle OBU
+↓
+Road Side Unit (RSU – ESP32)
+↓
+CMS Backend (Node.js + Express)
+↓
+MongoDB Atlas (Cloud Database)
+↓
+Web Dashboard (Admin Panel)
+
+---
+
+# Technology Stack
+
+Backend Framework
+Node.js with Express.js
+
+Database
+MongoDB Atlas (Cloud NoSQL Database)
+
+Authentication
+JWT (JSON Web Tokens)
+
+Password Security
+bcrypt.js
+
+Environment Configuration
+dotenv
+
+Cross-Origin Requests
+cors
+
+ODM (Database Modeling)
+mongoose
+
+Development Tool
+nodemon
+
+Deployment
+Vercel / Render (optional)
+
+---
+
+# Project Structure
 
 ```
-
-+-------------+        +-------------+        +--------------------+
-| Vehicle OBU | -----> | RSU (ESP32) | -----> | CMS Backend Server |
-+-------------+        +-------------+        +--------------------+
-|
-|
-v
-+---------------+
-| MongoDB Atlas |
-+---------------+
-|
-|
-v
-+---------------+
-| Admin CMS UI  |
-+---------------+
-
-```
-
----
-
-# ⚙️ Tech Stack
-
-## Backend
-- **Node.js**
-- **Express.js**
-
-## Database
-- **MongoDB Atlas (Cloud Database)**
-- **Mongoose ODM**
-
-## Authentication
-- **JWT (JSON Web Token)**
-- **bcryptjs**
-
-## Development Tools
-- Nodemon
-- Postman
-- VS Code
-
----
-
-# 📂 Project Structure
-
-```
-
 cms-backend
 │
 ├── src
@@ -94,222 +96,158 @@ cms-backend
 ├── .env
 ├── package.json
 └── README.md
-
-````
-
----
-
-# 🛠 Prerequisites
-
-Before running the backend, install the following:
-
-| Software | Download |
-|--------|--------|
-| Node.js | https://nodejs.org |
-| Git | https://git-scm.com |
-| VS Code | https://code.visualstudio.com |
-| MongoDB Atlas | https://www.mongodb.com/atlas |
-
-Verify installation:
-
-```bash
-node -v
-npm -v
-git --version
-````
-
----
-
-# ☁️ MongoDB Atlas Setup
-
-### 1️⃣ Create MongoDB Account
-
-Go to
-
-```
-https://www.mongodb.com/atlas
-```
-
-Create a free account.
-
----
-
-### 2️⃣ Create Cluster
-
-Select:
-
-```
-Cluster Type : M0 Free Tier
-Cloud Provider : AWS
-Region : Closest to India
-Cluster Name : vanet-cms-cluster
 ```
 
 ---
 
-### 3️⃣ Create Database User
+# Features
+
+Accident Data Collection
+Stores accident reports sent from RSUs.
+
+RSU Management
+Tracks RSU devices and their status.
+
+Admin Authentication
+Secure login system using JWT.
+
+RESTful API
+Clean API endpoints for dashboard integration.
+
+Scalable Database
+MongoDB Atlas cloud storage.
+
+IoT Integration
+Compatible with ESP32-based RSUs.
+
+---
+
+# Installation Guide
+
+## 1. Clone the Repository
 
 ```
-Username : cmsadmin
-Password : yourpassword
-```
-
-Permissions:
-
-```
-Atlas Admin
+git clone https://github.com/yourusername/vanet-cms-backend.git
+cd vanet-cms-backend
 ```
 
 ---
 
-### 4️⃣ Configure Network Access
-
-Go to:
+## 2. Install Dependencies
 
 ```
-Network Access → Add IP Address
+npm install
 ```
 
-Add:
+---
+
+## 3. Setup MongoDB Atlas
+
+1. Create an account at
+   [https://www.mongodb.com/atlas](https://www.mongodb.com/atlas)
+
+2. Create a **Free Cluster**
+
+3. Create a **Database User**
+
+Example:
+
+Username
+
+```
+cmsadmin
+```
+
+Password
+
+```
+cms12345
+```
+
+4. Add Network Access
+
+Allow access from anywhere
 
 ```
 0.0.0.0/0
 ```
 
-This allows connections from your backend server.
+5. Copy the **MongoDB Connection URI**
 
----
-
-### 5️⃣ Get Connection String
-
-Navigate to:
+Example:
 
 ```
-Database → Connect → Drivers → Node.js
-```
-
-Example connection string:
-
-```
-mongodb+srv://cmsadmin:<password>@vanet-cms-cluster.mongodb.net/vanetcms
-```
-
-Replace `<password>` with your database password.
-
----
-
-# 🚀 Backend Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/your-username/vanet-cms-backend.git
-```
-
-Move into project folder:
-
-```bash
-cd vanet-cms-backend
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Install required packages manually if needed:
-
-```bash
-npm install express mongoose dotenv cors bcryptjs jsonwebtoken
-```
-
-Install development dependency:
-
-```bash
-npm install nodemon --save-dev
+mongodb+srv://cmsadmin:password@cluster.mongodb.net/vanetcms
 ```
 
 ---
 
-# 🔐 Environment Variables
+## 4. Configure Environment Variables
 
 Create a `.env` file in the project root.
 
-Example configuration:
-
 ```
 PORT=5000
-MONGO_URI=mongodb+srv://cmsadmin:password@vanet-cms-cluster.mongodb.net/vanetcms
+MONGO_URI=mongodb+srv://cmsadmin:password@cluster.mongodb.net/vanetcms
 JWT_SECRET=vanet_super_secret_key
 ```
 
 ---
 
-# ▶️ Running the Backend
+## 5. Run the Backend Server
 
-Start the server:
+Development mode
 
-```bash
+```
+npm run dev
+```
+
+or
+
+```
 node src/server.js
 ```
 
-Or using nodemon:
-
-```bash
-npx nodemon src/server.js
-```
-
-Expected output:
+If successful, you will see:
 
 ```
 MongoDB Connected Successfully
 Server running on port 5000
 ```
 
-Backend will run on:
-
-```
-http://localhost:5000
-```
-
 ---
 
-# 📡 API Endpoints
+# API Endpoints
 
 ## Authentication
 
-### Login
+Login
+
+POST `/api/auth/login`
+
+Example Request
 
 ```
-POST /api/auth/login
-```
-
-Request Body:
-
-```json
 {
   "username": "admin",
-  "password": "password"
+  "password": "admin123"
 }
 ```
 
 ---
 
-## Accident API
+## Accident Management
 
-### Send Accident Alert
+Create Accident Record
+
+POST `/api/accidents`
+
+Example Request
 
 ```
-POST /api/accidents
-```
-
-Example request:
-
-```json
 {
   "rsuId": "RSU_01",
-  "vehicleId": "CAR_45",
+  "vehicleId": "CAR_12",
   "severity": "HIGH",
   "latitude": 19.0760,
   "longitude": 72.8777
@@ -318,49 +256,27 @@ Example request:
 
 ---
 
-### Get All Accidents
+Get All Accident Reports
 
-```
-GET /api/accidents
-```
-
-Returns all accident reports stored in the database.
+GET `/api/accidents`
 
 ---
 
-## RSU API
+## RSU Management
 
-### Register RSU
+Register RSU
 
-```
-POST /api/rsu
-```
+POST `/api/rsu`
 
-### Get All RSUs
+Get All RSUs
 
-```
-GET /api/rsu
-```
+GET `/api/rsu`
 
 ---
 
-# 🗄 Database Collections
+# Example Accident Record
 
-The system uses the following MongoDB collections:
-
-| Collection | Purpose                  |
-| ---------- | ------------------------ |
-| users      | CMS admin authentication |
-| rsu        | Road Side Units          |
-| accidents  | Accident reports         |
-| vehicles   | Vehicle information      |
-| alerts     | Emergency alerts         |
-
----
-
-# 📊 Example Accident Record
-
-```json
+```
 {
   "rsuId": "RSU_01",
   "vehicleId": "CAR_12",
@@ -373,44 +289,70 @@ The system uses the following MongoDB collections:
 
 ---
 
-# 🌐 Deployment (Optional)
+# Database Collections
 
-This backend can be deployed on:
+users
+Stores CMS admin accounts.
 
-* **Vercel**
-* **Render**
-* **Railway**
-* **AWS EC2**
+rsu
+Stores Road Side Unit devices.
 
-Environment variables must be configured on the hosting platform.
+accidents
+Stores accident reports received from RSUs.
 
----
+vehicles
+Stores registered vehicle OBUs.
 
-# 🔮 Future Enhancements
-
-* Real-time accident notifications
-* WebSocket based alerts
-* Live accident map
-* RSU heartbeat monitoring
-* Emergency service integration
-* Vehicle tracking
+alerts
+Stores emergency alerts and notifications.
 
 ---
 
-# 👨‍💻 Author
+# Deployment (Optional)
 
-Final Year Engineering Project
+The backend can be deployed on:
 
-**VANET Accident Detection System**
+* Vercel
+* Render
+* Railway
+* AWS
+
+Example deployment command (Vercel):
+
+```
+vercel
+```
 
 ---
 
-# ⭐ Contributing
+# Testing APIs
 
-Pull requests are welcome. For major changes, please open an issue first to discuss the proposed changes.
+You can test the APIs using:
+
+Postman
+Insomnia
+REST Client (VS Code)
+
+Example test URL:
+
+```
+http://localhost:5000/api/accidents
+```
 
 ---
 
-# 📜 License
+# Future Improvements
 
-This project is intended for **educational and research purposes**.
+Real-time accident alerts using WebSockets
+Vehicle tracking support
+RSU health monitoring
+Integration with emergency services
+Live map dashboard visualization
+
+---
+
+# License
+
+This project is developed for **academic and research purposes** as part of a **Final Year Engineering Project**.
+
+---
