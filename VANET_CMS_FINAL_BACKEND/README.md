@@ -1,1 +1,0 @@
-VANET CMS Backend FINAL\n- RSU auth\n- ML integration\n- Offline detection\n

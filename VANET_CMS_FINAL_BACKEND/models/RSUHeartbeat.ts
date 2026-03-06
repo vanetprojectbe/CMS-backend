@@ -1,1 +1,0 @@
-import mongoose from 'mongoose'; const schema=new mongoose.Schema({rsuId:String,fwVersion:String,uptime:Number,signal:Object,lastSeen:Date,alertedOffline:{type:Boolean,default:false}}); export default mongoose.models.RSUHeartbeat||mongoose.model('RSUHeartbeat',schema);

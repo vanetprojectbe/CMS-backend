@@ -1,1 +1,0 @@
-import mongoose from 'mongoose'; const schema=new mongoose.Schema({actor:String,action:String,rsuId:String,createdAt:{type:Date,default:Date.now}}); export default mongoose.models.AuditLog||mongoose.model('AuditLog',schema);

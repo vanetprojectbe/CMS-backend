@@ -1,1 +1,0 @@
-import {connectDB} from '@/lib/db'; import {requireRSU} from '@/lib/auth'; export default async function handler(req,res){ await connectDB(); const rsu=await requireRSU(req); if(!rsu.nextKey) return res.json({status:'no_change'}); res.json({rsuId:rsu.rsuId,newKey:rsu.nextKey,validFrom:new Date()}); }

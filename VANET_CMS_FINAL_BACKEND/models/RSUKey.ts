@@ -1,1 +1,0 @@
-import mongoose from 'mongoose'; const schema=new mongoose.Schema({rsuId:String,activeKey:String,nextKey:String,revoked:{type:Boolean,default:false}}); export default mongoose.models.RSUKey||mongoose.model('RSUKey',schema);
