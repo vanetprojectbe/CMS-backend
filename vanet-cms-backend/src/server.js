@@ -1,23 +1,35 @@
 require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 
 const app = express();
 
+/* Connect Database */
 connectDB();
 
+/* Middleware */
 app.use(cors());
 app.use(express.json());
 
+/* Health Check Route */
 app.get("/", (req, res) => {
-  res.send("VANET CMS Backend Running");
+  res.status(200).send("VANET CMS Backend Running");
 });
 
+/* API Routes */
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/accidents", require("./routes/accident.routes"));
 app.use("/api/rsu", require("./routes/rsu.routes"));
 
+/* Error Handling Middleware */
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Server Error" });
+});
+
+/* Start Server */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
