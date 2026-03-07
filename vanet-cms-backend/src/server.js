@@ -18,6 +18,10 @@ app.get("/", (req, res) => {
   res.status(200).send("VANET CMS Backend Running");
 });
 
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API working" });
+});
+
 /* API Routes */
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/accidents", require("./routes/accident.routes"));
@@ -34,8 +38,4 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
-
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API working" });
 });
