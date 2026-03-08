@@ -6,7 +6,20 @@ const AccidentSchema = new mongoose.Schema({
   severity: String,
   latitude: Number,
   longitude: Number,
-  timestamp: { type: Date, default: Date.now }
+
+  status: {
+    type: String,
+    default: "open"
+  },
+
+  description: String,
+
+  timestamp: {
+    type: Date,
+    default: Date.now
+  },
+
+  resolvedAt: Date
 });
 
 module.exports = mongoose.model("Accident", AccidentSchema);
