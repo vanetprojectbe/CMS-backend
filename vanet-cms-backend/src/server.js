@@ -27,6 +27,7 @@ app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/accidents", require("./routes/accident.routes"));
 app.use("/api/rsu", require("./routes/rsu.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
+app.use("/api/alerts", require("./routes/alerts.routes"));
 
 /* Error Handling Middleware */
 app.use((err, req, res, next) => {
