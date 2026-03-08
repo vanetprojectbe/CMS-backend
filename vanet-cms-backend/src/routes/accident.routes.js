@@ -15,7 +15,26 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const accidents = await Accident.find().sort({ timestamp: -1 });
+    const { status, search, limit = 50, offset = 0 } = req.query;
+
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (search) {
+      filter.$or = [
+        { vehicleId: { $regex: search, $options: "i" } },
+        { severity: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const accidents = await Accident.find(filter)
+      .sort({ timestamp: -1 })
+      .skip(Number(offset))
+      .limit(Number(limit));
+
     res.json(accidents);
   } catch (error) {
     res.status(500).json({ error: error.message });
