@@ -1,11 +1,20 @@
 const mongoose = require("mongoose");
 
 const AccidentSchema = new mongoose.Schema({
+
   rsuId: String,
+
   vehicleId: String,
+
   severity: String,
+
+  confidence: Number,
+
   latitude: Number,
+
   longitude: Number,
+
+  features: Object,
 
   status: {
     type: String,
@@ -20,6 +29,7 @@ const AccidentSchema = new mongoose.Schema({
   },
 
   resolvedAt: Date
+
 });
 
 module.exports = mongoose.model("Accident", AccidentSchema);
