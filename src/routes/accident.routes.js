@@ -1,6 +1,29 @@
 const express = require("express");
 const axios = require("axios");
 const Accident = require("../models/Accident");
+const axios = require("axios");
+
+async function sendAlert(service, accident) {
+
+  const message = `
+Accident detected!
+
+Severity: ${accident.severity}
+
+Location:
+https://maps.google.com/?q=${accident.latitude},${accident.longitude}
+
+Vehicle: ${accident.vehicleId}
+`;
+
+  console.log("Sending alert to:", service.name);
+
+  // Example SMS API call
+  // await axios.post("SMS_API_URL", { phone: service.phone, message });
+
+}
+
+module.exports = sendAlert;
 
 const router = express.Router();
 
@@ -76,6 +99,11 @@ router.post("/", async (req, res) => {
   }
 });
 
+const nearestServices = await findNearest(latitude, longitude);
+
+for (const service of nearestServices) {
+  await sendAlert(service, accident);
+}
 
 /*
 GET /api/accidents
