@@ -1,24 +1,23 @@
 const mongoose = require("mongoose");
 
 const EmergencyServiceSchema = new mongoose.Schema({
+
   name: String,
+
   type: String, // hospital | police | fire
 
-  phone: String,
-
-  telegramChatId: String, // IMPORTANT
+  telegramChatId: String,
 
   location: {
     type: {
       type: String,
-      enum: ["Point"],
       default: "Point"
     },
-    coordinates: [Number] // [longitude, latitude]
+    coordinates: [Number] // [lng, lat]
   }
+
 });
 
-/* Enable geospatial queries */
 EmergencyServiceSchema.index({ location: "2dsphere" });
 
 module.exports = mongoose.model("EmergencyService", EmergencyServiceSchema);
