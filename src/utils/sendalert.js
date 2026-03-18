@@ -1,23 +1,24 @@
-const axios = require("axios");
+const mongoose = require("mongoose");
 
-async function sendAlert(service, accident) {
+const EmergencyServiceSchema = new mongoose.Schema({
+  name: String,
+  type: String, // hospital | police | fire
 
-  const message = `
-Accident detected!
+  phone: String,
 
-Severity: ${accident.severity}
+  telegramChatId: String, // IMPORTANT
 
-Location:
-https://maps.google.com/?q=${accident.latitude},${accident.longitude}
+  location: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point"
+    },
+    coordinates: [Number] // [longitude, latitude]
+  }
+});
 
-Vehicle: ${accident.vehicleId}
-`;
+/* Enable geospatial queries */
+EmergencyServiceSchema.index({ location: "2dsphere" });
 
-  console.log("Sending alert to:", service.name);
-
-  // Example SMS API call
-  // await axios.post("SMS_API_URL", { phone: service.phone, message });
-
-}
-
-module.exports = sendAlert;
+module.exports = mongoose.model("EmergencyService", EmergencyServiceSchema);
