@@ -43,3 +43,7 @@ app.listen(PORT, () => {
   console.log(`[CMS] RSU heartbeat: POST /api/rsu/heartbeat  (x-api-key)`);
   console.log(`[CMS] Dashboard: GET /api/accidents  (JWT)`);
 });
+
+// In server.js — add this line alongside the existing /api/accidents mount
+app.use("/api/incidents", require("./routes/accident_routes"));  // alias for frontend
+app.use("/api/accidents", require("./routes/accident_routes"));  // keep for RSU hardware
