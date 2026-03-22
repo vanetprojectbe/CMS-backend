@@ -1,21 +1,20 @@
 const express = require("express");
 const axios   = require("axios");
 
-const Accident            = require("../models/Accident");
-const findNearest         = require("../utils/findNearest");
-const sendAlert           = require("../utils/sendalert");
-const sendTelegramAlert   = require("../utils/sendTelegramAlert");
-const { requireApiKey }   = require("../middleware/auth_middleware");
+const Accident          = require("../models/Accident");
+const findNearest       = require("../utils/findNearest");
+const sendAlert         = require("../utils/sendalert");
+const sendTelegramAlert = require("../utils/sendTelegramAlert");
+const { requireApiKey } = require("../middleware/auth_middleware");
 
 const router = express.Router();
 
 // ── POST /api/accidents ───────────────────────────────────────────────────────
-// Called by RSU — requires x-api-key header
+// Called by RSU hardware — requires x-api-key header
 router.post("/", requireApiKey, async (req, res) => {
   try {
     const body = req.body;
 
-    // Map OBU EAM fields — RSU forwards the raw JSON from OBU
     const latitude  = body.latitude  || body.lat;
     const longitude = body.longitude || body.lon;
 
@@ -26,17 +25,19 @@ router.post("/", requireApiKey, async (req, res) => {
     let severity   = "UNKNOWN";
     let confidence = 0;
 
-    // ── ML classification ───────────────────────────────────────────────────
+    // ── ML classification ─────────────────────────────────────────────────
     const mlFeatures = body.features || {
-      acc:   body.acc,
-      gyro:  body.gyro,
-      vib:   body.vib,
-      temp:  body.temp,
-      abag:  body.abag,
-      wdrop: body.wdrop,
-      spd:   body.spd,
-      cons:  body.cons,
-      idur:  body.idur
+      acc_delta:            body.acc   || 0,
+      gyro_delta:           body.gyro  || 0,
+      vibration_intensity:  body.vib   || 0,
+      impact_duration:      body.idur  || 0,
+      airbag_deployed:      body.abag  || 0,
+      wheel_speed_drop_pct: body.wdrop || 0,
+      thermal_c:            body.temp  || 0,
+      latitude:             body.lat   || body.latitude  || 0,
+      longitude:            body.lon   || body.longitude || 0,
+      initial_speed:        body.spd   || 0,
+      imu_consistency:      body.cons  || 0
     };
 
     if (process.env.ML_SERVICE_URL) {
@@ -53,17 +54,17 @@ router.post("/", requireApiKey, async (req, res) => {
       }
     }
 
-    // ── Save accident ───────────────────────────────────────────────────────
+    // ── Save accident ─────────────────────────────────────────────────────
     const accident = new Accident({
-      rsuId:     body.rsuId,
-      vehicleId: body.vehicleId,
+      rsuId:       body.rsuId,
+      vehicleId:   body.vehicleId,
       latitude,
       longitude,
       severity,
       confidence,
       description: body.description,
-      status: "open",
-      features: mlFeatures,
+      status:      "open",
+      features:    mlFeatures,
       eam: {
         acc:   body.acc,
         gyro:  body.gyro,
@@ -85,7 +86,7 @@ router.post("/", requireApiKey, async (req, res) => {
     await accident.save();
     console.log("[CMS] Accident saved:", accident._id);
 
-    // ── Find nearest emergency services ─────────────────────────────────────
+    // ── Find nearest emergency services ───────────────────────────────────
     let nearestServices = [];
     try {
       nearestServices = await findNearest(latitude, longitude);
@@ -93,7 +94,7 @@ router.post("/", requireApiKey, async (req, res) => {
       console.error("[CMS] Geo lookup failed:", geoErr.message);
     }
 
-    // ── Send per-service alerts (hospital / police / fire) ───────────────────
+    // ── Send per-service Telegram alerts ──────────────────────────────────
     for (const service of nearestServices) {
       try {
         await sendAlert(service, accident);
@@ -102,7 +103,7 @@ router.post("/", requireApiKey, async (req, res) => {
       }
     }
 
-    // ── Send general Telegram alert (broadcast channel) ─────────────────────
+    // ── Send broadcast Telegram alert ─────────────────────────────────────
     try {
       await sendTelegramAlert(accident);
     } catch (tgErr) {
@@ -123,13 +124,12 @@ router.post("/", requireApiKey, async (req, res) => {
 });
 
 // ── GET /api/accidents ────────────────────────────────────────────────────────
-// Dashboard — requires JWT
-const {  } = require("../middleware/auth_middleware");
-
-router.get("/", , async (req, res) => {
+// Dashboard fetch — NO auth required (open for frontend access)
+router.get("/", async (req, res) => {
   try {
     const { status, search, limit = 50, offset = 0 } = req.query;
     const filter = {};
+
     if (status) filter.status = status;
     if (search) filter.$or = [
       { vehicleId: { $regex: search, $options: "i" } },
@@ -142,6 +142,7 @@ router.get("/", , async (req, res) => {
       .limit(Number(limit));
 
     res.json(accidents);
+
   } catch (err) {
     console.error("[CMS] Fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch accidents" });
@@ -149,7 +150,8 @@ router.get("/", , async (req, res) => {
 });
 
 // ── PATCH /api/accidents/:id/resolve ─────────────────────────────────────────
-router.patch("/:id/resolve", , async (req, res) => {
+// No auth required for now
+router.patch("/:id/resolve", async (req, res) => {
   try {
     const accident = await Accident.findByIdAndUpdate(
       req.params.id,
