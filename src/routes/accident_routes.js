@@ -124,9 +124,9 @@ router.post("/", requireApiKey, async (req, res) => {
 
 // ── GET /api/accidents ────────────────────────────────────────────────────────
 // Dashboard — requires JWT
-const { requireAuth } = require("../middleware/auth_middleware");
+const {  } = require("../middleware/auth_middleware");
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", , async (req, res) => {
   try {
     const { status, search, limit = 50, offset = 0 } = req.query;
     const filter = {};
@@ -149,7 +149,7 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 // ── PATCH /api/accidents/:id/resolve ─────────────────────────────────────────
-router.patch("/:id/resolve", requireAuth, async (req, res) => {
+router.patch("/:id/resolve", , async (req, res) => {
   try {
     const accident = await Accident.findByIdAndUpdate(
       req.params.id,
