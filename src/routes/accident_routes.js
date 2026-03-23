@@ -9,8 +9,20 @@ const { requireApiKey } = require("../middleware/auth_middleware");
 
 const router = express.Router();
 
+// ── Reverse geocode lat/lon → street address ──────────────────────────────────
+async function reverseGeocode(lat, lon) {
+  try {
+    const resp = await axios.get(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+      { timeout: 5000, headers: { "User-Agent": "VANET-CMS/1.0" } }
+    );
+    return resp.data.display_name || "";
+  } catch {
+    return "";
+  }
+}
+
 // ── POST /api/accidents ───────────────────────────────────────────────────────
-// Called by RSU hardware — requires x-api-key header
 router.post("/", requireApiKey, async (req, res) => {
   try {
     const body = req.body;
@@ -21,6 +33,9 @@ router.post("/", requireApiKey, async (req, res) => {
     if (!latitude || !longitude) {
       return res.status(400).json({ error: "Missing GPS coordinates" });
     }
+
+    // FIX 2: OBU sends "vid" not "vehicleId"
+    const vehicleId = body.vid || body.vehicleId || "UNKNOWN";
 
     let severity   = "UNKNOWN";
     let confidence = 0;
@@ -34,32 +49,39 @@ router.post("/", requireApiKey, async (req, res) => {
       airbag_deployed:      body.abag  || 0,
       wheel_speed_drop_pct: body.wdrop || 0,
       thermal_c:            body.temp  || 0,
-      latitude:             body.lat   || body.latitude  || 0,
-      longitude:            body.lon   || body.longitude || 0,
+      latitude:             latitude,
+      longitude:            longitude,
       initial_speed:        body.spd   || 0,
       imu_consistency:      body.cons  || 0
     };
 
     if (process.env.ML_SERVICE_URL) {
       try {
+        // FIX 1: 30s timeout — Render free tier cold start takes up to 60s
         const mlResp = await axios.post(
           process.env.ML_SERVICE_URL + "/predict",
           mlFeatures,
-          { timeout: 5000 }
+          { timeout: 30000 }
         );
         severity   = mlResp.data.severity   || "UNKNOWN";
         confidence = mlResp.data.confidence || 0;
+        console.log("[ML] Severity: " + severity + " confidence: " + confidence);
       } catch (mlErr) {
         console.error("[ML] Service failed:", mlErr.message);
       }
     }
 
+    // FIX 3: reverse geocode coordinates → human readable address
+    const address = await reverseGeocode(latitude, longitude);
+    if (address) console.log("[GEO] Address:", address);
+
     // ── Save accident ─────────────────────────────────────────────────────
     const accident = new Accident({
       rsuId:       body.rsuId,
-      vehicleId:   body.vehicleId,
+      vehicleId,
       latitude,
       longitude,
+      address,
       severity,
       confidence,
       description: body.description,
@@ -84,7 +106,7 @@ router.post("/", requireApiKey, async (req, res) => {
     });
 
     await accident.save();
-    console.log("[CMS] Accident saved:", accident._id);
+    console.log("[CMS] Saved: " + accident._id + "  vehicle=" + vehicleId + "  severity=" + severity);
 
     // ── Find nearest emergency services ───────────────────────────────────
     let nearestServices = [];
@@ -99,7 +121,7 @@ router.post("/", requireApiKey, async (req, res) => {
       try {
         await sendAlert(service, accident);
       } catch (alertErr) {
-        console.error(`[CMS] Alert failed for ${service.name}:`, alertErr.message);
+        console.error("[CMS] Alert failed for " + service.name + ":", alertErr.message);
       }
     }
 
@@ -111,10 +133,12 @@ router.post("/", requireApiKey, async (req, res) => {
     }
 
     res.json({
-      message:  "Accident processed successfully",
-      id:       accident._id,
+      message:   "Accident processed successfully",
+      id:        accident._id,
+      vehicleId,
       severity,
-      notified: nearestServices.length
+      address,
+      notified:  nearestServices.length
     });
 
   } catch (err) {
@@ -124,16 +148,15 @@ router.post("/", requireApiKey, async (req, res) => {
 });
 
 // ── GET /api/accidents ────────────────────────────────────────────────────────
-// Dashboard fetch — NO auth required (open for frontend access)
 router.get("/", async (req, res) => {
   try {
     const { status, search, limit = 50, offset = 0 } = req.query;
     const filter = {};
-
     if (status) filter.status = status;
     if (search) filter.$or = [
       { vehicleId: { $regex: search, $options: "i" } },
-      { severity:  { $regex: search, $options: "i" } }
+      { severity:  { $regex: search, $options: "i" } },
+      { address:   { $regex: search, $options: "i" } }
     ];
 
     const accidents = await Accident.find(filter)
@@ -142,7 +165,6 @@ router.get("/", async (req, res) => {
       .limit(Number(limit));
 
     res.json(accidents);
-
   } catch (err) {
     console.error("[CMS] Fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch accidents" });
@@ -150,7 +172,6 @@ router.get("/", async (req, res) => {
 });
 
 // ── PATCH /api/accidents/:id/resolve ─────────────────────────────────────────
-// No auth required for now
 router.patch("/:id/resolve", async (req, res) => {
   try {
     const accident = await Accident.findByIdAndUpdate(
