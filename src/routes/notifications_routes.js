@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Alert = require("../models/Alert");
+const Alert = require("../models/Accident");
 
 // GET notifications (alias of alerts)
 router.get("/", async (req, res) => {
