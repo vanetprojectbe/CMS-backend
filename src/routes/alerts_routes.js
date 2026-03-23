@@ -5,7 +5,7 @@ const { requireAuth } = require("../middleware/auth_middleware");
 const router = express.Router();
 
 // GET /api/alerts — all non-resolved (dashboard)
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const alerts = await Accident.find({ status: { $ne: "resolved" } })
       .sort({ timestamp: -1 });
