@@ -26,6 +26,7 @@ app.use("/api/rsu",       require("./routes/rsu_routes"));
 app.use("/api/alerts",    require("./routes/alerts_routes"));
 app.use("/api/admin",     require("./routes/admin_routes"));
 app.use("/api/notifications", require("./routes/notifications_routes"));
+app.use("/api/notifications", require("./routes/extra_routes")); 
 
 // ── Default Admin Creator ─────────────────────────────────────────────────────
 const createDefaultAdmin = async () => {
