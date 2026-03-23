@@ -4,10 +4,10 @@ const { requireAuth } = require("../middleware/auth_middleware");
 
 const router = express.Router();
 
-router.get("/users", requireAuth, async (req, res) => {
+router.get("/users", async (req, res) => {
   try {
     const users = await User.find().select("-password");
-    res.json(users);
+    res.json();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
