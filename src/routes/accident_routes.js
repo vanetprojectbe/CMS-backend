@@ -40,6 +40,16 @@ router.post("/", requireApiKey, async (req, res) => {
     let severity   = "UNKNOWN";
     let confidence = 0;
 
+    const newAccident = await accident.save();
+
+// 🔥 SEND REAL-TIME UPDATE
+global.broadcast({
+  type: "NEW_ACCIDENT",
+  data: newAccident
+});
+
+res.json(newAccident);
+
     // ── ML classification ─────────────────────────────────────────────────
     const mlFeatures = body.features || {
       acc_delta:            body.acc   || 0,
