@@ -79,6 +79,36 @@ const startServer = async () => {
     console.error("❌ Server startup failed:", err);
     process.exit(1);
   }
-};
 
+  const http = require("http");
+const WebSocket = require("ws");
+
+const server = http.createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocket.Server({ server });
+
+// Store clients
+let clients = [];
+
+wss.on("connection", (ws) => {
+  console.log("🔌 Client connected");
+
+  clients.push(ws);
+
+  ws.on("close", () => {
+    console.log("❌ Client disconnected");
+    clients = clients.filter(c => c !== ws);
+  });
+});
+
+// Make broadcast function globally available
+global.broadcast = (data) => {
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
+};
+  
 startServer();
