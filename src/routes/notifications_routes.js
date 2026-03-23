@@ -6,14 +6,16 @@ router.get("/", async (req, res) => {
   try {
     const accidents = await Accident.find().sort({ createdAt: -1 });
 
-    const notifications = accidents.map(acc => ({
-      id: acc._id.toString(),
-      type: "alert", // REQUIRED for frontend
-      title: "Accident Detected",
-      description: `Severity: ${acc.severity || "unknown"}`,
-      timestamp: acc.createdAt,
-      read: false
-    }));
+    const notifications = accidents
+      .filter(Boolean) // ✅ REMOVE undefined
+      .map(acc => ({
+        id: acc._id?.toString(),
+        type: "alert",
+        title: "Accident Detected",
+        description: `Severity: ${acc.severity || "unknown"}`,
+        timestamp: acc.createdAt || new Date(),
+        read: false
+      }));
 
     res.json(notifications);
 
