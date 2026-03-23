@@ -13,9 +13,9 @@ const AccidentSchema = new mongoose.Schema({
   // ── GPS ───────────────────────────────────────────────────────────────────
   latitude:  Number,
   longitude: Number,
+  address:   String,   // reverse geocoded street address (added)
 
   // ── Raw EAM fields from OBU ───────────────────────────────────────────────
-  // These are forwarded directly from the OBU JSON payload via RSU
   eam: {
     acc:    Number,   // fused acceleration m/s²
     gyro:   Number,   // angular velocity deg/s
@@ -33,20 +33,19 @@ const AccidentSchema = new mongoose.Schema({
     ss:     Number
   },
 
-  // ── ML features (arbitrary object for future use) ─────────────────────────
+  // ── ML features ───────────────────────────────────────────────────────────
   features: Object,
 
   // ── Workflow status ───────────────────────────────────────────────────────
   status: {
-    type: String,
-    enum: ["open", "dispatched", "acknowledged", "resolved"],
+    type:    String,
+    enum:    ["open", "dispatched", "acknowledged", "resolved"],
     default: "open"
   },
 
   description: String,
-
-  timestamp:  { type: Date, default: Date.now },
-  resolvedAt: Date
+  timestamp:   { type: Date, default: Date.now },
+  resolvedAt:  Date
 
 });
 
