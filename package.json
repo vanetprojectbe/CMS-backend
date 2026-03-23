@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "name": "vanet-cms-backend",
   "version": "1.0.0",
@@ -23,7 +22,7 @@
     "nodemon": "^3.0.2"
   }
 }
-=======
+
 {
   "name": "vanet-cms-backend",
   "version": "1.0.0",
@@ -47,4 +46,4 @@
     "nodemon": "^3.0.2"
   }
 }
->>>>>>> 338d60290a409ac359cbb7be2037b3444f9f1e5f
+ 338d60290a409ac359cbb7be2037b3444f9f1e5f
