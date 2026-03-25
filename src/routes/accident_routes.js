@@ -9,7 +9,7 @@ const { requireApiKey } = require("../middleware/auth_middleware");
 
 const router = express.Router();
 
-// ── Reverse geocode lat/lon → street address ──────────────────────────────────
+// ── Reverse geocode lat/lon → address ──
 async function reverseGeocode(lat, lon) {
   try {
     const resp = await axios.get(
@@ -22,7 +22,7 @@ async function reverseGeocode(lat, lon) {
   }
 }
 
-// ── POST /api/accidents ───────────────────────────────────────────────────────
+// ── POST /api/accidents ──
 router.post("/", requireApiKey, async (req, res) => {
   try {
     const body = req.body;
@@ -34,23 +34,12 @@ router.post("/", requireApiKey, async (req, res) => {
       return res.status(400).json({ error: "Missing GPS coordinates" });
     }
 
-    // FIX 2: OBU sends "vid" not "vehicleId"
     const vehicleId = body.vid || body.vehicleId || "UNKNOWN";
 
     let severity   = "UNKNOWN";
     let confidence = 0;
 
-    const newAccident = await accident.save();
-
-// 🔥 SEND REAL-TIME UPDATE
-global.broadcast({
-  type: "NEW_ACCIDENT",
-  data: newAccident
-});
-
-res.json(newAccident);
-
-    // ── ML classification ─────────────────────────────────────────────────
+    // ── ML FEATURES ──
     const mlFeatures = body.features || {
       acc_delta:            body.acc   || 0,
       gyro_delta:           body.gyro  || 0,
@@ -59,15 +48,15 @@ res.json(newAccident);
       airbag_deployed:      body.abag  || 0,
       wheel_speed_drop_pct: body.wdrop || 0,
       thermal_c:            body.temp  || 0,
-      latitude:             latitude,
-      longitude:            longitude,
+      latitude,
+      longitude,
       initial_speed:        body.spd   || 0,
       imu_consistency:      body.cons  || 0
     };
 
+    // ── ML CALL ──
     if (process.env.ML_SERVICE_URL) {
       try {
-        // FIX 1: 30s timeout — Render free tier cold start takes up to 60s
         const mlResp = await axios.post(
           process.env.ML_SERVICE_URL + "/predict",
           mlFeatures,
@@ -75,17 +64,15 @@ res.json(newAccident);
         );
         severity   = mlResp.data.severity   || "UNKNOWN";
         confidence = mlResp.data.confidence || 0;
-        console.log("[ML] Severity: " + severity + " confidence: " + confidence);
-      } catch (mlErr) {
-        console.error("[ML] Service failed:", mlErr.message);
+      } catch (err) {
+        console.error("[ML] Failed:", err.message);
       }
     }
 
-    // FIX 3: reverse geocode coordinates → human readable address
+    // ── GEO ──
     const address = await reverseGeocode(latitude, longitude);
-    if (address) console.log("[GEO] Address:", address);
 
-    // ── Save accident ─────────────────────────────────────────────────────
+    // ── CREATE OBJECT ──
     const accident = new Accident({
       rsuId:       body.rsuId,
       vehicleId,
@@ -115,73 +102,86 @@ res.json(newAccident);
       }
     });
 
+    // ── SAVE ──
     await accident.save();
-    console.log("[CMS] Saved: " + accident._id + "  vehicle=" + vehicleId + "  severity=" + severity);
+    console.log("[CMS] Saved:", accident._id);
 
-    // ── Find nearest emergency services ───────────────────────────────────
+    // ── REAL-TIME BROADCAST ──
+    if (global.broadcast) {
+      global.broadcast({
+        type: "NEW_ACCIDENT",
+        data: accident
+      });
+    }
+
+    // ── FIND SERVICES ──
     let nearestServices = [];
     try {
       nearestServices = await findNearest(latitude, longitude);
-    } catch (geoErr) {
-      console.error("[CMS] Geo lookup failed:", geoErr.message);
+    } catch (err) {
+      console.error("[CMS] Geo error:", err.message);
     }
 
-    // ── Send per-service Telegram alerts ──────────────────────────────────
+    // ── ALERTS ──
     for (const service of nearestServices) {
       try {
         await sendAlert(service, accident);
-      } catch (alertErr) {
-        console.error("[CMS] Alert failed for " + service.name + ":", alertErr.message);
+      } catch (err) {
+        console.error("[CMS] Alert error:", err.message);
       }
     }
 
-    // ── Send broadcast Telegram alert ─────────────────────────────────────
+    // ── TELEGRAM ──
     try {
       await sendTelegramAlert(accident);
-    } catch (tgErr) {
-      console.error("[CMS] Telegram broadcast failed:", tgErr.message);
+    } catch (err) {
+      console.error("[CMS] Telegram error:", err.message);
     }
 
+    // ── RESPONSE ──
     res.json({
-      message:   "Accident processed successfully",
-      id:        accident._id,
-      vehicleId,
+      message: "Accident processed successfully",
+      id: accident._id,
       severity,
       address,
-      notified:  nearestServices.length
+      notified: nearestServices.length
     });
 
   } catch (err) {
-    console.error("[CMS] Accident processing error:", err);
+    console.error("[CMS] ERROR:", err);
     res.status(500).json({ error: "Accident processing failed" });
   }
 });
 
-// ── GET /api/accidents ────────────────────────────────────────────────────────
+// ── GET /api/accidents ──
 router.get("/", async (req, res) => {
   try {
     const { status, search, limit = 50, offset = 0 } = req.query;
+
     const filter = {};
     if (status) filter.status = status;
-    if (search) filter.$or = [
-      { vehicleId: { $regex: search, $options: "i" } },
-      { severity:  { $regex: search, $options: "i" } },
-      { address:   { $regex: search, $options: "i" } }
-    ];
+    if (search) {
+      filter.$or = [
+        { vehicleId: { $regex: search, $options: "i" } },
+        { severity:  { $regex: search, $options: "i" } },
+        { address:   { $regex: search, $options: "i" } }
+      ];
+    }
 
     const accidents = await Accident.find(filter)
-      .sort({ timestamp: -1 })
+      .sort({ createdAt: -1 })
       .skip(Number(offset))
       .limit(Number(limit));
 
     res.json(accidents);
+
   } catch (err) {
     console.error("[CMS] Fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch accidents" });
   }
 });
 
-// ── PATCH /api/accidents/:id/resolve ─────────────────────────────────────────
+// ── PATCH /api/accidents/:id/resolve ──
 router.patch("/:id/resolve", async (req, res) => {
   try {
     const accident = await Accident.findByIdAndUpdate(
@@ -189,8 +189,11 @@ router.patch("/:id/resolve", async (req, res) => {
       { status: "resolved", resolvedAt: new Date() },
       { new: true }
     );
+
     if (!accident) return res.status(404).json({ error: "Not found" });
+
     res.json(accident);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
